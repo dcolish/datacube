@@ -4,6 +4,9 @@ Copyright 2012 Urban Airship and Contributors
 
 package com.urbanairship.datacube;
 
+import com.google.common.base.Optional;
+import com.google.common.reflect.TypeToken;
+
 import java.util.List;
 
 /**
@@ -22,11 +25,13 @@ public class Dimension<F> {
     private final int bucketPrefixSize;
     private final boolean isBucketed;
     private final boolean nullable;
-    
+    private final Optional<TypeToken<F>> typeToken;
+
+
     /**
      * For dimensions where a single input bucket affects multiple buckets within that dimension.
      * For example, a single input data point might affect hourly, daily, and monthly counts.
-     * 
+     *
      * @param doIdSubstitution whether to use the immutable bucket->uniqueId substition service
      * @param the number of bytes that will be reserved in database keys for coordinates in this
      * dimension. For example, if values in this dimension have 1000 distinct values, then you'd
@@ -34,9 +39,17 @@ public class Dimension<F> {
      * full bytes).
      */
     public Dimension(String name, Bucketer<F> bucketer, boolean doIdSubstitution, int fieldBytes) {
-        this(name, bucketer, doIdSubstitution, fieldBytes, false);
+        this(name, bucketer, doIdSubstitution, fieldBytes, false, Optional.<TypeToken<F>>absent());
     }
-      
+
+    public Dimension(String name, Bucketer<F> bucketer, boolean doIdSubstitution, int fieldBytes, boolean nullable) {
+        this(name, bucketer, doIdSubstitution, fieldBytes, nullable, Optional.<TypeToken<F>>absent());
+    }
+
+    public Dimension(String name, Bucketer<F> bucketer, boolean doIdSubstitution, int fieldBytes, Class<F> type) {
+        this(name, bucketer, doIdSubstitution, fieldBytes, false, Optional.of(TypeToken.of(type)));
+    }
+
     /**
      * For dimensions where a single input bucket affects multiple buckets within that dimension.
      * For example, a single input data point might affect hourly, daily, and monthly counts.
@@ -50,12 +63,23 @@ public class Dimension<F> {
      * otherwise true
      */
     public Dimension(String name, Bucketer<F> bucketer, boolean doIdSubstitution, int fieldBytes, 
-            boolean nullable) {
+            boolean nullable, Optional<TypeToken<F>> type) {
         this.name = name;
         this.bucketer = bucketer;
         this.doIdSubstitution = doIdSubstitution;
         this.numFieldBytes = fieldBytes;
         this.nullable = nullable;
+        if (type.isPresent()) {
+            this.typeToken = type;
+        } else {
+            TypeToken<F> token = new TypeToken<F>(getClass()) { };
+            if (token.getType() == null) {
+                this.typeToken = Optional.absent();
+            } else {
+                this.typeToken = Optional.of(token);
+            }
+        }
+
         
         // Make sure all bucket unique id prefixes have the same length
         Integer previousLen = null;
@@ -115,5 +139,8 @@ public class Dimension<F> {
     boolean isBucketed() {
         return isBucketed;
     }
-    
+
+    public Optional<TypeToken<F>> getTypeToken() {
+        return typeToken;
+    }
 }

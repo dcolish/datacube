@@ -4,15 +4,13 @@ Copyright 2012 Urban Airship and Contributors
 
 package com.urbanairship.datacube;
 
-import java.util.List;
-
 /**
  * A struct for specifying a dimension and bucket type to be used in a rollup.
  */
 public class DimensionAndBucketType {
     public final Dimension<?> dimension;
     public final BucketType bucketType;
-    
+
     public DimensionAndBucketType(Dimension<?> dimension, BucketType bucketType) {
         this.dimension = dimension;
         this.bucketType = bucketType;
@@ -23,10 +21,9 @@ public class DimensionAndBucketType {
      * doesn't use bucketing.
      */
     public DimensionAndBucketType(Dimension<?> dimension) {
-        this.dimension = dimension;
-        this.bucketType = BucketType.IDENTITY;
+        this(dimension, BucketType.IDENTITY);
     }
-    
+
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(dimension);
